@@ -3,20 +3,41 @@ const app = express();
 const dotnev = require("dotenv");
 dotnev.config();
 const jwt = require("jsonwebtoken");
+
+let users: User[] = [{ email: "alwin@gmail.com", password: "1234" }];
+
 //middlewares
 app.use(express.json());
+
+const verifyToken = (req: any, res: any, next: any) => {
+  const token = req.headers["token"] as string;
+  try {
+    const decodedInfo = jwt.verify(token, process.env.JWT_SECRET as string);
+    const user = users.find((user: any) => user.email === decodedInfo.email);
+    if (!user) {
+      return res.json({ message: "Invalid token" });
+    }
+  } catch (err) {
+    return res.json({ message: "Invalid token" });
+  }
+
+  next();
+};
 
 interface User {
   email: string;
   password: string;
 }
 
-let users: User[] = [{ email: "alwin@gmail.com", password: "1234" }];
+// const generatToken = (email: string) => {
+//   const token = Math.random().toString(36);
+//   return token;
+// };
+//
 
-const generatToken = (email: string) => {
-  const token = Math.random().toString(36);
-  return token;
-};
+app.get("/", verifyToken, (req: any, res: any) => {
+  res.json({ message: "Welcome to the server" });
+});
 
 app.get("/auth", (req: any, res: any) => {
   const token = req.headers["token"] as string;
